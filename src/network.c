@@ -443,7 +443,7 @@ int netcat_socket_new(nc_domain_t domain, nc_proto_t proto)
    if the connect(2) call failed. */
 
 int netcat_socket_new_connect(nc_domain_t domain, nc_proto_t proto,
-			      const nc_host_t *addr, const nc_port_t *port,
+			      const nc_host_t *addr, const nc_port_t *port/*要连接的远端port*/,
 			      const nc_host_t *local_addr, const nc_port_t *local_port)
 {
   int sock, ret, my_family = AF_UNSPEC;
@@ -472,6 +472,7 @@ int netcat_socket_new_connect(nc_domain_t domain, nc_proto_t proto,
 
   /* only if needed, bind it to a local address */
   if (local_addr || local_port->num) {
+      //如果需要就绑定到指针的源地址及端口
     struct sockaddr *my_addr;
     unsigned int my_addr_len;
 
@@ -519,6 +520,7 @@ int netcat_socket_new_connect(nc_domain_t domain, nc_proto_t proto,
   }
 
   /* add the non-blocking flag to this socket */
+  //将socket置为非阻塞
   if ((ret = fcntl(sock, F_GETFL, 0)) >= 0)
     ret = fcntl(sock, F_SETFL, ret | O_NONBLOCK);
   if (ret < 0) {
@@ -526,6 +528,7 @@ int netcat_socket_new_connect(nc_domain_t domain, nc_proto_t proto,
     goto err;
   }
 
+  //设置要连接的远端地址
   if (domain == NETCAT_DOMAIN_IPV4) {
     struct sockaddr_in *rem4_addr = malloc(sizeof(*rem4_addr));
 
@@ -556,6 +559,7 @@ int netcat_socket_new_connect(nc_domain_t domain, nc_proto_t proto,
   /* now launch the real connection.  Since we are in non-blocking mode, this
      call will return -1 in MOST cases (on some systems, a connect() to a local
      address may immediately return successfully) */
+  //连接到远端
   ret = connect(sock, rem_addr, rem_addr_len);
   free(rem_addr);
   if ((ret < 0) && (errno != EINPROGRESS)) {

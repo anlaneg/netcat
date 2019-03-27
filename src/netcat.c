@@ -563,6 +563,7 @@ int main(int argc, char *argv[])
 		strerror(errno));
       }
       else {
+          //连接成功，执行读写
 	glob_ret = EXIT_SUCCESS;
 	core_readwrite(&listen_sock, &connect_sock);
 	debug_dv(("Tunnel: EXIT (ret=%d)", glob_ret));

@@ -498,6 +498,7 @@ static int core_tcp_listen(nc_sock_t *ncsock)
 
 /* ... */
 
+//连接到远端地址
 int core_connect(nc_sock_t *ncsock)
 {
   assert(ncsock);
