@@ -282,12 +282,14 @@ typedef struct {
 			 *   operation on the socket. */
   nc_convert_t conversion; /**< Specifies the type of EOL conversion to
 			 * perform on the socket. */
+  //采用ipv4还是ipv6
   nc_domain_t domain;	/**< Specifies the level 3 domain of the socket */
+  //采用哪种协议进行连接
   nc_proto_t proto;	/**< Specifies the level 4 protocol used by the
 			 * socket */
   nc_host_t local;	/**< Local host information */
   nc_port_t local_port;	/**< Local port information */
-  nc_host_t remote;	/**< Remote host information */
+  nc_host_t remote;	/**< Remote host information */ //需要连接的远端地址
   nc_port_t port;	/**< Remote port information */
   nc_buffer_t sendq;	/**< Queue for outgoing data */
   nc_buffer_t recvq;	/**< Queue for incoming data */

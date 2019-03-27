@@ -55,8 +55,8 @@ int opt_verbose = 0;		/* be verbose (> 1 to be MORE verbose) */
 int opt_wait = 0;		/* wait time */
 char *opt_outputfile = NULL;	/* hexdump output file */
 char *opt_exec = NULL;		/* program to exec after connecting */
-nc_domain_t opt_domain = NETCAT_DOMAIN_IPV4;
-nc_proto_t opt_proto = NETCAT_PROTO_TCP; /* protocol to use for connections */
+nc_domain_t opt_domain = NETCAT_DOMAIN_IPV4;//默认使用ipv4协议
+nc_proto_t opt_proto = NETCAT_PROTO_TCP; /* protocol to use for connections */ //需要使用哪种传输层协议
 nc_convert_t opt_ascii_conversion = NETCAT_CONVERT_NONE;
 
 /* Signal handling */
@@ -191,8 +191,8 @@ int main(int argc, char *argv[])
 	{ "pointer",	required_argument,	NULL, 'G' },
 	{ "help",	no_argument,		NULL, 'h' },
 	{ "interval",	required_argument,	NULL, 'i' },
-	{ "ipv4",	no_argument,		NULL, '4' },
-	{ "ipv6",	no_argument,		NULL, '6' },
+	{ "ipv4",	no_argument,		NULL, '4' },//指明采用ipv4协议连接
+	{ "ipv6",	no_argument,		NULL, '6' },//指明采用ipv6协议连接
 	{ "listen",	no_argument,		NULL, 'l' },
 	{ "tunnel",	required_argument,	NULL, 'L' },
 	{ "dont-resolve", no_argument,		NULL, 'n' },
@@ -239,6 +239,7 @@ int main(int argc, char *argv[])
       break;
     case 'e':			/* prog to exec */
       if (opt_exec)
+          //-e参数仅容许出现一次
 	ncprint(NCPRINT_ERROR | NCPRINT_EXIT,
 		_("Cannot specify `-e' option double"));
       opt_exec = strdup(optarg);
@@ -257,13 +258,13 @@ int main(int argc, char *argv[])
 		_("Invalid interval time \"%s\""), optarg);
       break;
     case 'l':			/* mode flag: listen mode */
-      if (netcat_mode != NETCAT_UNSPEC)
+      if (netcat_mode != NETCAT_UNSPEC)//监听模式
 	ncprint(NCPRINT_ERROR | NCPRINT_EXIT,
 		_("You can specify mode flags (`-l' and `-L') only once"));
       netcat_mode = NETCAT_LISTEN;
       break;
     case 'L':			/* mode flag: tunnel mode */
-      if (netcat_mode != NETCAT_UNSPEC)
+      if (netcat_mode != NETCAT_UNSPEC)//tunnel模式
 	ncprint(NCPRINT_ERROR | NCPRINT_EXIT,
 		_("You can specify mode flags (`-l' and `-L') only once"));
       if (opt_zero)
@@ -328,6 +329,7 @@ int main(int argc, char *argv[])
       opt_hexdump = TRUE;	/* implied */
       break;
     case 'p':			/* local source port */
+        //解析端口号
       if (!netcat_getport(&local_port, optarg, 0))
 	ncprint(NCPRINT_ERROR | NCPRINT_EXIT, _("Invalid local port: %s"),
 		optarg);
@@ -342,11 +344,13 @@ int main(int argc, char *argv[])
       break;
     case 's':			/* local source address */
       /* lookup the source address and assign it to the connection address */
+        //解析本地源地址
       if (!netcat_resolvehost(&local_host, optarg))
 	ncprint(NCPRINT_ERROR | NCPRINT_EXIT,
 		_("Couldn't resolve local host: %s"), optarg);
       break;
     case 'S':			/* used only in tunnel mode (source ip) */
+        //解析tunnel情况下源地址
       if (!netcat_resolvehost(&connect_sock.local, optarg))
 	ncprint(NCPRINT_ERROR | NCPRINT_EXIT,
 		_("Couldn't resolve tunnel local host: %s"), optarg);
@@ -433,6 +437,7 @@ int main(int argc, char *argv[])
 
   /* try to get an hostname parameter */
   if (optind < argc) {
+      //解析用户给出的远端ip地址
     const char *get_host = argv[optind++];
     if (!netcat_resolvehost(&remote_host, get_host))
       ncprint(NCPRINT_ERROR | NCPRINT_EXIT, _("Couldn't resolve host \"%s\""),
@@ -495,6 +500,7 @@ int main(int argc, char *argv[])
 #endif
 
   /* Handle listen mode and tunnel mode (whose index number is higher) */
+  //如果针对netcat_mode进行了赋值,且大于connect时进入
   if (netcat_mode > NETCAT_CONNECT) {
     /* in tunnel mode the opt_zero flag is illegal, while on listen mode it
        means that no connections should be accepted.  For UDP it means that
@@ -509,8 +515,10 @@ int main(int argc, char *argv[])
     /* prepare the socket var and start listening */
     listen_sock.proto = opt_proto;
     listen_sock.timeout = opt_wait;
+    //设置要监听的ip地址及端口
     memcpy(&listen_sock.local, &local_host, sizeof(listen_sock.local));
     memcpy(&listen_sock.local_port, &local_port, sizeof(listen_sock.local_port));
+    //需要连接的远端地址
     memcpy(&listen_sock.remote, &remote_host, sizeof(listen_sock.remote));
     accept_ret = core_listen(&listen_sock);
 
@@ -518,6 +526,7 @@ int main(int argc, char *argv[])
        (ETIMEDOUT) since no connections are accepted, because of this our job
        is completed now. */
     if (accept_ret < 0) {
+        //接入客户端失败，退出
       /* since i'm planning to make `-z' compatible with `-L' I need to check
          the exact error that caused this failure. */
       if (opt_zero && (errno == ETIMEDOUT))
@@ -531,6 +540,7 @@ int main(int argc, char *argv[])
        otherwise now it's the time to connect to the target host and tunnel
        them together (which means passing to the next section. */
     if (netcat_mode == NETCAT_LISTEN) {
+        //监听模式下的处理（分两种情况:1.执行外部程序;2.自远端读取，写入本端）
       if (opt_exec) {
 	ncprint(NCPRINT_VERB2, _("Passing control to the specified program"));
 	ncexec(&listen_sock);		/* this won't return */
@@ -539,6 +549,7 @@ int main(int argc, char *argv[])
       debug_dv(("Listen: EXIT"));
     }
     else {
+        //当前处于tunnel模式
       /* otherwise we are in tunnel mode.  The connect_sock var was already
          initialized by the command line arguments. */
       assert(netcat_mode == NETCAT_TUNNEL);
@@ -562,6 +573,7 @@ int main(int argc, char *argv[])
     goto main_exit;
   }				/* end of listen and tunnel mode handling */
 
+  //这种情况下，默认是connect模式
   /* we need to connect outside, this is the connect mode */
   netcat_mode = NETCAT_CONNECT;
 

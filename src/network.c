@@ -211,7 +211,7 @@ bool netcat_resolvehost(nc_host_t *dst, const char *name)
    this case `port_num' is discarded.
    If `port_name' is NULL then `port_num' is used to identify the port and
    if opt_numeric is not TRUE, the port name is looked up reversely. */
-
+//解析端口号
 bool netcat_getport(nc_port_t *dst, const char *port_name,
 		    unsigned short port_num)
 {
@@ -254,6 +254,7 @@ bool netcat_getport(nc_port_t *dst, const char *port_name,
        but it doesn't occur at the first char, throw an error */
     port = strtol(port_name, &endptr, 10);
     if (!endptr[0]) {
+        //进行数字形式尝试
       /* pure numeric value, check it out */
       if ((port > 0) && (port < 65536))
         return netcat_getport(dst, NULL, (in_port_t)port);
@@ -261,9 +262,11 @@ bool netcat_getport(nc_port_t *dst, const char *port_name,
         return FALSE;
     }
     else if (endptr != port_name)	/* mixed numeric and string value */
+        //不支持数字及字符串mixed的形式
       return FALSE;
 
     /* this is a port name, try to lookup it */
+    //执行名称解析
     servent = getservbyname(port_name, get_proto);
     if (servent) {
       strncpy(dst->name, servent->s_name, sizeof(dst->name));
@@ -381,6 +384,7 @@ const char *netcat_inet_ntop(int af, const void *src)
    Returns -1 if the socket(2) call failed, -2 if the setsockopt() call failed;
    otherwise the return value is a descriptor referencing the new socket. */
 
+//按domain,proto创建对应的socket
 int netcat_socket_new(nc_domain_t domain, nc_proto_t proto)
 {
   int sock, ret, sockdomain, socktype, sockopt;
@@ -402,11 +406,13 @@ int netcat_socket_new(nc_domain_t domain, nc_proto_t proto)
   else
     abort();
 
+  //创建对应的socket
   sock = socket(sockdomain, socktype, 0);
   if (sock < 0)
     return -1;
 
   /* don't leave the socket in a TIME_WAIT state if we close the connection */
+  //如果进程退出，则立即返回，不延迟
   fix_ling.l_onoff = 1;
   fix_ling.l_linger = 0;
   ret = setsockopt(sock, SOL_SOCKET, SO_LINGER, &fix_ling, sizeof(fix_ling));
@@ -416,6 +422,7 @@ int netcat_socket_new(nc_domain_t domain, nc_proto_t proto)
   }
 
   /* fix the socket options */
+  //设置socket地址重用
   sockopt = 1;
   ret = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(sockopt));
   if (ret < 0) {
@@ -584,6 +591,7 @@ int netcat_socket_new_connect(nc_domain_t domain, nc_proto_t proto,
    netcat_socket_new()), -3 if the bind(2) call failed, or -4 if the listen(2)
    call failed. */
 
+//执行地址addr,port的监听
 int netcat_socket_new_listen(nc_domain_t domain, const nc_host_t *addr,
 			     const nc_port_t *port)
 {
@@ -604,11 +612,13 @@ int netcat_socket_new_listen(nc_domain_t domain, const nc_host_t *addr,
     return -1;		/* unknown domain, assume socket(2) call failed */
 
   /* create the socket and fix the options */
+  //创建tcp socket
   sock = netcat_socket_new(domain, NETCAT_PROTO_TCP);
   if (sock < 0)
     return sock;		/* forward the error code */
 
   /* reset local sockaddr structure for bind(2), based on the domain */
+  //准备监听的端口及ip地址
   if (domain == NETCAT_DOMAIN_IPV4) {
     struct sockaddr_in *my4_addr = malloc(sizeof(*my4_addr));
 
@@ -653,12 +663,14 @@ int netcat_socket_new_listen(nc_domain_t domain, const nc_host_t *addr,
   }
 
   /* now make it listening, with a reasonable backlog value */
+  //实现监听
   ret = listen(sock, 4);
   if (ret < 0) {
     ret = -4;
     goto err;
   }
 
+  //返回创建好的socket
   return sock;
 
  err:
@@ -721,6 +733,7 @@ int netcat_socket_accept(int s, int timeout)
 
   /* have we got this connection? */
   if (FD_ISSET(s, &in)) {
+      //有新客户端进入
     int new_sock;
 
     new_sock = accept(s, NULL, NULL);

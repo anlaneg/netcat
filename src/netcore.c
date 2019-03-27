@@ -405,7 +405,7 @@ static int core_tcp_connect(nc_sock_t *ncsock)
    stays unconditionally in listen mode until timeout elapses, if any,
    otherwise forever.
    Returns: The new socket descriptor for the fetched connection */
-
+//指定tcp连接
 static int core_tcp_listen(nc_sock_t *ncsock)
 {
   int sock_listen, sock_accept, timeout = ncsock->timeout;
@@ -421,10 +421,12 @@ static int core_tcp_listen(nc_sock_t *ncsock)
   /* if the port is set to 0, it means that we want listening port assigned
      randomly by OS.  Find out which port they assigned to us. */
   if (ncsock->local_port.num == 0) {
+      //监听时选择了任意端口，获取操作系统分配的地址
     int ret;
     struct sockaddr_in findport;
     unsigned int findport_len = sizeof(findport);
 
+    //获取fd对应的地址
     ret = getsockname(sock_listen, (struct sockaddr *)&findport, &findport_len);
     if (ret < 0) {
       close(sock_listen);
@@ -440,6 +442,7 @@ static int core_tcp_listen(nc_sock_t *ncsock)
     unsigned int myaddr_len = sizeof(myaddr);	/* this *IS* socklen_t */
 
     /* failures in netcat_socket_accept() cause this function to return */
+    //开始接受客户端连接(timeout指明accept等待超时的时间）
     sock_accept = netcat_socket_accept(sock_listen, timeout);
     if (sock_accept < 0)
       return -1;
@@ -450,6 +453,7 @@ static int core_tcp_listen(nc_sock_t *ncsock)
        dunno what it matters, but i don't understand my own comment! */
     timeout = -1;
 
+    //取客户端地址
     getpeername(sock_accept, (struct sockaddr *)&myaddr, &myaddr_len);
 
     /* if a "remote address" (and optionally some ports) have been specified,
@@ -514,6 +518,7 @@ int core_listen(nc_sock_t *ncsock)
 {
   assert(ncsock);
 
+  //执行tcp,udp指定端口监听
   if (ncsock->proto == NETCAT_PROTO_TCP)
     return ncsock->fd = core_tcp_listen(ncsock);
   else if (ncsock->proto == NETCAT_PROTO_UDP)

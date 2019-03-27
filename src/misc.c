@@ -209,6 +209,7 @@ void ncprint(int type, const char *fmt, ...)
 
   /* return if this requires some verbosity levels and we haven't got it */
   if (!opt_debug) {
+      //如果没有开启debug模式，则跳出
     if ((flags & NCPRINT_VERB2) && (opt_verbose < 2))
       goto end;
 
