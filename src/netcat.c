@@ -78,6 +78,7 @@ static void got_int(int z)
     ncprint(NCPRINT_VERB1, _("Exiting."));
   debug_v(("_____ RECEIVED SIGINT _____ [signal_handler=%s]",
 	  BOOL_TO_STR(signal_handler)));
+  //标记收到了sigint信号
   got_sigint = TRUE;
   if (signal_handler) {			/* default action */
     if (commandline_need_newline)	/* if we were waiting for input */
@@ -163,6 +164,7 @@ int main(int argc, char *argv[])
 #endif
 
   /* set up the signal handling system */
+  //注册信号处理函数
   sigemptyset(&sv.sa_mask);
   sv.sa_flags = 0;
   sv.sa_handler = got_int;
@@ -580,6 +582,7 @@ int main(int argc, char *argv[])
 
   /* first check that a host parameter was given */
   if (!remote_host.host.iaddrs[0].s_addr) {
+      //未设
     /* FIXME: The Networking specifications state that host address "0" is a
        valid host to connect to but this broken check will assume as not
        specified. */

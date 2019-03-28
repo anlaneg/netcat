@@ -532,7 +532,7 @@ int core_listen(nc_sock_t *ncsock)
 
 /* handle stdin/stdout/network I/O. */
 
-int core_readwrite(nc_sock_t *nc_main, nc_sock_t *nc_slave)
+int core_readwrite(nc_sock_t *nc_main, nc_sock_t *nc_slave/*读写的socket*/)
 {
   int fd_stdin, fd_stdout, fd_sock, fd_max;
   int read_ret, write_ret;
@@ -551,6 +551,7 @@ int core_readwrite(nc_sock_t *nc_main, nc_sock_t *nc_slave)
 
   /* if the domain is unspecified, it means that this is the standard I/O */
   if (nc_slave->domain == PF_UNSPEC) {
+      //未指明，使用stdin,stdout作用输入输出fd
     fd_stdin = STDIN_FILENO;
     fd_stdout = STDOUT_FILENO;
   }
@@ -627,6 +628,7 @@ int core_readwrite(nc_sock_t *nc_main, nc_sock_t *nc_slave)
       update_timeval(NULL);
 #endif
 
+      //准备接收
       debug(("[select] entering with timeout=%d:%d ...", delayer.tv_sec, delayer.tv_usec));
       ret = select(fd_max, &ins, &outs, NULL,
 		   (delayer.tv_sec || delayer.tv_usec ? &delayer : NULL));
@@ -658,6 +660,7 @@ int core_readwrite(nc_sock_t *nc_main, nc_sock_t *nc_slave)
        this queue is empty now because otherwise this fd wouldn't have been
        watched. */
     if (call_select && FD_ISSET(fd_stdin, &ins)) {
+        //读取buffer
       read_ret = read(fd_stdin, buf, sizeof(buf));
       debug_dv(("read(stdin) = %d", read_ret));
 
@@ -740,6 +743,7 @@ int core_readwrite(nc_sock_t *nc_main, nc_sock_t *nc_slave)
 	delayer.tv_sec = opt_interval;
       }
 
+      //将读取到的内容反手写给fd_sock
       write_ret = write(fd_sock, data, data_len);
       if (write_ret < 0) {
 	if (errno == EAGAIN)
