@@ -23,3 +23,7 @@ almost any kind of connection you would need and has several interesting
 built-in capabilities.
 
 This file will be written soon or late...
+
+这个项目停止维护好多年了，目前社区netcat-openbsd包来源于openbsd-src/usr.bin/nc
+可能访问http://ftp.debian.org/debian/pool/main/n/netcat-openbsd/ 获得此包的更新软件
+
