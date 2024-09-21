@@ -379,7 +379,7 @@ int main(int argc, char *argv[])
       netcat_printversion();
       exit(EXIT_SUCCESS);
     case 'w':			/* wait time (in seconds), 0 means no timeout */
-      opt_wait = atoi(optarg);
+      opt_wait = atoi(optarg);/*设置超时时间*/
       if (opt_wait < 0)
 	ncprint(NCPRINT_ERROR | NCPRINT_EXIT, _("Invalid wait-time: %s"),
 		optarg);
@@ -516,7 +516,7 @@ int main(int argc, char *argv[])
 
     /* prepare the socket var and start listening */
     listen_sock.proto = opt_proto;
-    listen_sock.timeout = opt_wait;
+    listen_sock.timeout = opt_wait;/*设置timeout时间*/
     //设置要监听的ip地址及端口
     memcpy(&listen_sock.local, &local_host, sizeof(listen_sock.local));
     memcpy(&listen_sock.local_port, &local_port, sizeof(listen_sock.local_port));

@@ -174,7 +174,7 @@ static int core_udp_listen(nc_sock_t *ncsock)
     }
 
     /* automatically use remaining timeout time if in zero-I/O mode */
-    ret = select(sock_max, &ins, NULL, NULL, (timeout > 0 ? &tt : NULL));
+    ret = select(sock_max, &ins, NULL, NULL, (timeout > 0 ? &tt /*超时时间*/: NULL));
     if (ret == 0)
       break;
 
